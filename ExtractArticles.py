@@ -84,8 +84,25 @@ findPagesinSubcategories('Categoría:Geomática‎',0,1)
 findPagesinSubcategories('Categoría:Ingeniería de software‎',0,1)
 findPagesinSubcategories('Categoría:Seguridad informática‎',0,1)
 
+
 findPagesinSubcategories('Categoría:Arte',0,2)
-findPagesinSubcategories('Categoría:Técnicas de arte',0,2)
+findPagesinSubcategories('Categoría:Técnicas_de_arte',0,2)
+findPagesinSubcategories('Categoría:Antropología',0,2)
+findPagesinSubcategories('Categoría:Símbolos',0,2)
+findPagesinSubcategories('Categoría:Ciencias_Históricas',0,2)
+
+findPagesinSubcategories('Categoría:Ciencias_sociales',0,3)
+findPagesinSubcategories('Categoría:Economía',0,3)
+findPagesinSubcategories('Categoría:Sociología',0,3)
+findPagesinSubcategories('Categoría:Comunicación',0,3)
+findPagesinSubcategories('Categoría:Términos_jurídicos',0,3)
+findPagesinSubcategories('Categoría:Justicia',0,3)
+findPagesinSubcategories('Categoría:Derecho',0,3)
+findPagesinSubcategories('Categoría:Principios_del_derecho',0,3)
+
+
+
+
 
 
    
