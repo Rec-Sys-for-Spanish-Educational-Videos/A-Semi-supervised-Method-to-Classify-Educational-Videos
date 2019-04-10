@@ -29,33 +29,6 @@ regex = RegexpTokenizer(r"\b\w+\b");
 processedArticles = []
 processedLabels = []
 
-
-for i in range(0,len(articles)):
-    art = articles[i][0]
-    
-    art = str(art)
-    
-    if len(art) < 50:
-        continue
-   
-    art = art.lower()
-    
-    words = regex.tokenize(art)
-    
-    processedArticle = ""
-    
-    for word in words:
-        processedArticle+= word + " "
-        
-    processedArticles.append(processedArticle)
-    
-    if(labels[i] == 2):
-        labels[i] = 3
-   
-    processedLabels.append(labels[i])
-    
-
-
 def processTranscript(transcript):
     words = regex.tokenize(transcript)
     processedTranscript = ""
@@ -66,14 +39,30 @@ def processTranscript(transcript):
     return processedTranscript
 
 
-
+for i in range(0,len(articles)):
+    art = articles[i][0]
+    
+    art = str(art)
+    
+    if len(art) < 50:
+        continue
+        
+    processedArticles.append(processTranscript(art))
+    
+    if(labels[i] == 2):
+        labels[i] = 3
+   
+    processedLabels.append(labels[i])
+    
 
 from sklearn.model_selection import train_test_split
 
-wikiTrain, wikiEvalTrain, wikiTrainTest, wikiEvalTest = train_test_split(processedArticles,processedLabels , test_size=0.10, random_state=42)
+wikiTrain, wikiEvalTrain, wikiTrainTest, wikiEvalTest = train_test_split(processedArticles,processedLabels , test_size=0.30, random_state=42)
+
+wikiEvalTrain, wikiFinalTrain, wikiEvalTest, wikiFinalTest =  train_test_split(wikiEvalTrain,wikiEvalTest , test_size=0.50, random_state=42)
 
 
-print("Load Transcripts")
+print("Loading Transcripts")
 
 transcripts = []
 transcriptsKeywords = []
@@ -99,7 +88,7 @@ for videos in videos_json:
     else:
         keywords = keywords_obj
             
-    if transcript != "" and len(transcript) >= 6581 and keywords!="":
+    if transcript != "" and keywords!="":
         processedTr = processTranscript(transcript)
         processedKey = processTranscript(keywords)
         
@@ -117,13 +106,16 @@ X = []
 Z = []
 T = []
 K = []
+Q = []
 
 with tf.Session() as session:
     session.run([tf.global_variables_initializer(), tf.tables_initializer()])
     X = session.run(embed(wikiTrain))
     Z = session.run(embed(wikiEvalTrain))
+    Q = session.run(embed(wikiFinalTrain))
     T = session.run(embed(transcripts))
     K = session.run(embed(transcriptsKeywords))
+    
     
 
 print("Vector matrix generated")
@@ -137,14 +129,15 @@ wikiTrainTest = np.array(wikiTrainTest)
 from collections import defaultdict
 
 validTranscriptsIndices = defaultdict(list)
-wrongTranscriptsIndices =range(0,len(transcripts))
+wrongTranscriptsIndices = range(0,len(transcripts))
+
+TranscriptsX = []
+TranscriptsXLabels =[]
+
 while(True):
-    print(X.shape)
-    print(wikiTrainTest.shape)
-    print(T.shape)
-    print(K.shape)
+   
     nr = 0
-    clf = svm.SVC(gamma='scale', decision_function_shape='ovo', kernel='rbf', C=100)
+    clf = svm.SVC(gamma='scale', decision_function_shape='ovo', kernel='rbf', C=60)
     
     scores = cross_val_score(clf, X,wikiTrainTest.ravel(), cv=10)
     print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))
@@ -163,17 +156,21 @@ while(True):
     validTranscriptsLabels = []
     
     invalidTranscriptsX = []
+    invalidTranscriptsLabels = []
     invalidKeywordsX =[]
     
     wrongIndices =[]
     for i in range(0,len(resultTrLabels)):
         if(resultTrLabels[i] == resultKeyLabels[i]):
-            validTranscriptsX.append(T[i])
+            validTranscriptsX.append(T[i]);
+            TranscriptsX.append(T[i])
+            TranscriptsXLabels.append(resultTrLabels[i])
             validTranscriptsLabels.append(resultTrLabels[i])
             validTranscriptsIndices[resultTrLabels[i]].append(wrongTranscriptsIndices[i])
             nr+=1
         else:
             invalidTranscriptsX.append(T[i])
+            invalidTranscriptsLabels.append(resultTrLabels[i])
             invalidKeywordsX.append(K[i])
             wrongIndices.append(wrongTranscriptsIndices[i])
     
@@ -182,7 +179,11 @@ while(True):
 
     print("Valid transcripts:" + str(nr) + " / " + str(len(resultTrLabels)) )
     
-    if(nr == 0):
+    if(nr < 20):
+        for j in range(0,len(invalidTranscriptsX)):
+              TranscriptsX.append(invalidTranscriptsX[j])
+              TranscriptsXLabels.append(invalidTranscriptsLabels[j])
+    
         break
    
     X = np.append(X, np.array(validTranscriptsX),axis = 0)
@@ -191,8 +192,17 @@ while(True):
     T = np.array(invalidTranscriptsX)
     K = np.array(invalidKeywordsX)
     
+    if(nr == len(resultTrLabels)):
+        break
     
+    
+clf = svm.SVC(gamma='scale', decision_function_shape='ovo', kernel='rbf', C=60)
+scores = cross_val_score(clf, np.array(TranscriptsX) ,np.array(TranscriptsXLabels).ravel(), cv=10)
+print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))
+clf.fit(np.array(TranscriptsX) ,np.array(TranscriptsXLabels).ravel())
+result = clf.predict(Q)
         
+print(classification_report(wikiFinalTest, result))
 
 
 
