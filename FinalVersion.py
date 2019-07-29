@@ -48,9 +48,6 @@ for i in range(0,len(articles)):
         continue
         
     processedArticles.append(processTranscript(art))
-    
-    if(labels[i] == 2):
-        labels[i] = 3
    
     processedLabels.append(labels[i])
     
