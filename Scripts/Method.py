@@ -11,8 +11,11 @@ def methodSingleTrainer(clf,threshold, upvData, wikiTrain, wikiTrainLabels, wiki
 
     obtainedTranscripts = []
     obtainedTranscriptsLabels =[]
-
+    iteration = 1
     while(True):
+        print("Iteration #" + str(iteration) +'\n')
+        iteration+=1
+
         numberGoodClassifiedTranscripts = 0
         
         scores = cross_val_score(clf, trainX, trainY, cv=10)
@@ -47,4 +50,4 @@ def methodSingleTrainer(clf,threshold, upvData, wikiTrain, wikiTrainLabels, wiki
         trainY = np.append(wikiTrainLabels, np.array(obtainedTranscriptsLabels).ravel(), axis =  0).ravel()
 
         if(numberGoodClassifiedTranscripts < threshold or numberGoodClassifiedTranscripts == len(resultTranscriptsLabels)):
-            return [obtainedTranscripts, obtainedTranscriptsLabels, transcripts, keywords]
+            return [np.array(obtainedTranscripts), np.array(obtainedTranscriptsLabels), np.array(transcripts), np.array(keywords)]

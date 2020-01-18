@@ -13,13 +13,10 @@ def loadWikipediaArticles():
     for i in range(0,len(articles)):
         art = articles[i][0]
         art = str(art)
-        
-        if len(art) < 50:
+
+        if(len(art) < 50 or len(art) > 18000):
             continue
-        
-        if len(art) > 5000:
-            continue
-        
+
         processedArticles.append([art, labels[i]])
 
     return processedArticles
@@ -48,6 +45,8 @@ def loadUpvData():
             keywords = keywords_obj
                 
         if transcript != "" and keywords!="":
+            if(len(transcript) < 50 or len(transcript) > 18000):
+                continue 
             upvData.append([transcript, keywords])
 
     return upvData
