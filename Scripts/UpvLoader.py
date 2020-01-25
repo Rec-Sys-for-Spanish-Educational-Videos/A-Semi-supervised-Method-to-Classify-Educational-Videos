@@ -2,10 +2,13 @@ import pandas as pd
 import json 
 
 def loadWikipediaArticles():
-    dataframe = pd.read_excel("Data/wikipediaArticles.xlsx", usecols = "B")
+    dataframe = pd.read_excel("Data/WikipediaTruthDataset.xlsx", usecols = "C")
     articles = dataframe.values
 
-    dataframe = pd.read_excel("Data/wikipediaArticles.xlsx", usecols = "C")
+    dataframe = pd.read_excel("Data/WikipediaTruthDataset.xlsx", usecols = "D")
+    keywords = dataframe.values
+
+    dataframe = pd.read_excel("Data/WikipediaTruthDataset.xlsx", usecols = "E")
     labels = dataframe.values
 
     processedArticles = []
@@ -17,7 +20,7 @@ def loadWikipediaArticles():
         if(len(art) < 50 or len(art) > 18000):
             continue
 
-        processedArticles.append([art, labels[i]])
+        processedArticles.append([art,str(keywords[i][0]), labels[i]])
 
     return processedArticles
 

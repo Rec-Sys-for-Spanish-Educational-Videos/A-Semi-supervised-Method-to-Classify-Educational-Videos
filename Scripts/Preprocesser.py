@@ -25,13 +25,15 @@ def preprocessUpvData(upvData):
 
 def preprocessWikipediaData(upvData):
     processedWikipediaData = []
+    processedWikipediaKeywords = []
     labels = []
 
-    for article, label in upvData:
+    for article, keywords, label in upvData:
         processedWikipediaData.append(processText(article))
+        processedWikipediaKeywords.append(processText(keywords))
         labels.append(label)
 
-    return [processedWikipediaData, labels]
+    return [processedWikipediaData,processedWikipediaKeywords, labels]
 
 
     
