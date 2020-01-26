@@ -25,7 +25,7 @@ def preprocessUpvData(upvData):
         processedKeywords = processText(keywords)
 
         words = processedText.split()
-        if(len(words) < 10 or len(words) > 2800):
+        if(len(words) < 10 or len(words) > 2800 or len(processedKeywords) == 0):
             continue
 
         processedUpvTranscripts.append(processedText)
@@ -43,7 +43,7 @@ def preprocessWikipediaData(wikipediaData):
         processedKeywords = processText(keywords)
 
         words = processedText.split()
-        if(len(words) < 10 or len(words) > 2800):
+        if(len(words) < 10 or len(words) > 2800 or len(processedKeywords) == 0):
             continue
 
         processedWikipediaData.append(processedText)

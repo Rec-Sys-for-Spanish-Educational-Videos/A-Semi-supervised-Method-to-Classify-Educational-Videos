@@ -44,9 +44,9 @@ class NnlmModel:
 
 class BertModel:
    def __init__(self):
-      self.bc = BertClient()
+      self.bc = BertClient(ip="192.168.0.104",output_fmt="list")
 
 
    def createEmbeddings(self, X):
-      return self.bc.encode(X)     
+      return np.array(self.bc.encode(X))     
  
