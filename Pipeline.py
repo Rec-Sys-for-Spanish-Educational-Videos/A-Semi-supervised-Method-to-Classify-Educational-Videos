@@ -85,6 +85,21 @@ def pipeline():
         print("\t\tUpv keywords embeddings")
         keywordsEmbeddings = embedder.createEmbeddings(preProcessedUpvData[1])
 
+        print("Create embeddings for co-training trainer(the embeddings for keywords will be just NNLM while the embeddings for text can vary)")
+        nnlmForKeywords = Transformer.NnlmModel()
+        
+        print("\tNnlm wikipedia train keywords embeddings")
+        nnlmWikiTrainKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiTrainKeywords)
+
+        print("\tNnlm wikipedia train validation keywords embeddings")
+        nnlmWikiTrainValidationKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiTrainValidationKeywords)
+
+        print("\tNnlm wikipedia method validation keywords embeddings")
+        nnlmWikiMethodValidationKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiMethodValidationKeywords)
+
+        print("\tNnlm upv keywords embeddings")
+        nnlmWikikeywordsEmbeddings = nnlmForKeywords.createEmbeddings(preProcessedUpvData[1])
+
         for clf in classifiers:
             print("Using classifier " + clf.__class__.__name__)
 
@@ -94,32 +109,17 @@ def pipeline():
             Method.validateTheMethod(clf, None, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, wikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
 
 
-            print("Create embeddings for co-training trainer(the embeddings for keywords will be just NNLM while the embeddings for text can vary)")
-            nnlmForKeywords = Transformer.NnlmModel()
-            
-            print("\tRemake wikipedia train keywords embeddings")
-            wikiTrainKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiTrainKeywords)
-
-            print("\tRemake wikipedia train validation keywords embeddings")
-            wikiTrainValidationKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiTrainValidationKeywords)
-
-            print("\tRemake wikipedia method validation keywords embeddings")
-            wikiMethodValidationKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiMethodValidationKeywords)
-
-            print("\tRemake upv keywords embeddings")
-            keywordsEmbeddings = nnlmForKeywords.createEmbeddings(preProcessedUpvData[1])
-
             print("Starting the cotrainer with static keywords...")
-            knownTranscripts, knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 50, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticlesEmbeddings, wikiTrainKeywords = wikiTrainKeywordsEmbeddings, wikiTrainLabels = wikiTrainLabels.ravel(),
-                                                                                                                        wikiTrainValidationArticles = wikiTrainValidationArticlesEmbeddings, wikiTrainValidationKeywords = wikiTrainValidationKeywordsEmbeddings, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= True)
+            knownTranscripts, knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 50, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticlesEmbeddings, wikiTrainKeywords = nnlmWikiTrainKeywordsEmbeddings, wikiTrainLabels = wikiTrainLabels.ravel(),
+                                                                                                                        wikiTrainValidationArticles = wikiTrainValidationArticlesEmbeddings, wikiTrainValidationKeywords = nnlmWikiTrainValidationKeywordsEmbeddings, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= True)
             
-            Method.validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, wikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
+            Method.validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, nnlmWikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
 
             print("Starting the cotrainer with dynamic keywords...")
-            knownTranscripts,knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 50, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticlesEmbeddings, wikiTrainKeywords = wikiTrainKeywordsEmbeddings, wikiTrainLabels = wikiTrainLabels.ravel(),
-                                                                                                                        wikiTrainValidationArticles = wikiTrainValidationArticlesEmbeddings, wikiTrainValidationKeywords = wikiTrainValidationKeywordsEmbeddings, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= False)
+            knownTranscripts,knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 50, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticlesEmbeddings, wikiTrainKeywords = nnlmWikiTrainKeywordsEmbeddings, wikiTrainLabels = wikiTrainLabels.ravel(),
+                                                                                                                        wikiTrainValidationArticles = wikiTrainValidationArticlesEmbeddings, wikiTrainValidationKeywords = nnlmWikiTrainValidationKeywordsEmbeddings, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= False)
             
-            Method.validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, wikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
+            Method.validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, nnlmWikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
 
     
 
