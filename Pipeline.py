@@ -115,7 +115,7 @@ embedders = [Transformer.BertModel(), Transformer.UseModel(), Transformer.NnlmMo
 
 classifiers = [    svm.SVC(gamma='auto', decision_function_shape='ovo', kernel='rbf', C = 5),
                    RandomForestClassifier(n_jobs=-1),
-                   XGBClassifier(n_thread=-1)
+                   XGBClassifier(nthreads=-1)
               ]
 keywordsModel = svm.SVC(gamma='auto', decision_function_shape='ovo', kernel='rbf', C = 1)
 
