@@ -70,7 +70,6 @@ def findPagesinSubcategories(page_id, depth,label):
         
 
 findPagesinSubcategories(wikipedia.page('Categoría:Biología').pageid,0,0)
-
 findPagesinSubcategories(wikipedia.page('Categoría:Anatomía').pageid,0,0)
 findPagesinSubcategories(wikipedia.page('Categoría:Bioinformática‎').pageid,0,0)
 findPagesinSubcategories(wikipedia.page('Categoría:Biología celular‎').pageid,0,0)
@@ -95,7 +94,6 @@ findPagesinSubcategories(wikipedia.page('Categoría:Técnicas_de_arte').pageid,0
 findPagesinSubcategories(wikipedia.page('Categoría:Antropología').pageid,0,2)
 findPagesinSubcategories(wikipedia.page('Categoría:Símbolos').pageid,0,2)
 findPagesinSubcategories(wikipedia.page('Categoría:Ciencias_Históricas').pageid,0,2)
-
 findPagesinSubcategories(wikipedia.page('Categoría:Ciencias_sociales').pageid,0,2)
 findPagesinSubcategories(wikipedia.page('Categoría:Economía').pageid,0,2)
 findPagesinSubcategories(wikipedia.page('Categoría:Sociología').pageid,0,2)

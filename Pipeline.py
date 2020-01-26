@@ -3,47 +3,12 @@ import Scripts.Preprocesser as Preprocesser
 import Scripts.Transformer as Transformer
 import Scripts.Method as Method
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import classification_report
-
-def validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticles, wikiMethodValidationKeywords, wikiMethodValidationLabels):
-    print("Validating the method...")
-
-    print("Validating the transcripts")
-    scores = cross_val_score(clf, knownTranscripts, knownTranscriptsLabels, cv=10)
-    clf.fit(knownTranscripts, knownTranscriptsLabels)
-
-    result = clf.predict(wikiMethodValidationArticles)
-
-    print("10-fold cross-validation for articles model accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))      
-    print(classification_report(wikiMethodValidationLabels, result))
-
-    if(keywordsModel != None):
-        print("Validating the keywords")
-        
-        scores = cross_val_score(keywordsModel, knownKeywords, knownTranscriptsLabels, cv=10)
-        keywordsModel.fit(knownKeywords, knownTranscriptsLabels)
-
-        result = keywordsModel.predict(wikiMethodValidationKeywords)
-
-        print("10-fold cross-validation for keywords model accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))      
-        print(classification_report(wikiMethodValidationLabels, result))
-    else:
-        print("Validating the keywords")
-        
-        scores = cross_val_score(clf, knownKeywords, knownTranscriptsLabels, cv=10)
-        clf.fit(knownKeywords, knownTranscriptsLabels)
-
-        result = clf.predict(wikiMethodValidationKeywords)
-
-        print("10-fold cross-validation for keywords model accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))      
-        print(classification_report(wikiMethodValidationLabels, result))
-
 
 def pipeline(clf, keywordsModel, embedder):
 
@@ -53,7 +18,7 @@ def pipeline(clf, keywordsModel, embedder):
 
     upvData = Loader.loadUpvData()
     print("\tUpv data loaded")
-    wikipediaData = Loader.loadWikipediaArticles()
+    wikipediaData = Loader.loadWikipediaData()
     print("\tWikipedia data loaded")
 
     print("Preprocessing data...")
@@ -62,6 +27,8 @@ def pipeline(clf, keywordsModel, embedder):
     preProcessedUpvData = Preprocesser.preprocessUpvData(upvData)
     print("\tPreprocess wikipedia data")
     preProcessedWikipediaArticles, preProcessedWikipediaKeywords, wikipediaLabels = Preprocesser.preprocessWikipediaData(wikipediaData)
+
+    #Preprocesser.runStatistics(preProcessedUpvData, preProcessedWikipediaArticles, preProcessedWikipediaKeywords, wikipediaLabels)
 
     print("Split data in training and test...")
 
@@ -74,47 +41,72 @@ def pipeline(clf, keywordsModel, embedder):
 
     wikiMethodValidationArticles, wikiMethodValidationKeywords = [wikiMethodValidation[:, 0:1].T.tolist()[0], wikiMethodValidation[:,1:2].T.tolist()[0]]
 
-    print("Create embeddings...")
-    nnlmForKeywords = Transformer.NnlmModel()
-
-    print("\tWikipedia train embeddings")
-    wikiTrainArticles = embedder.createEmbeddings(wikiTrainArticles)
-    wikiTrainKeywords = nnlmForKeywords.createEmbeddings(wikiTrainKeywords)
-
-    print("\tWikipedia train validation embeddings")
-    wikiTrainValidationArticles = embedder.createEmbeddings(wikiTrainValidationArticles)
-    wikiTrainValidationKeywords = nnlmForKeywords.createEmbeddings(wikiTrainValidationKeywords)
-
-    print("\tWikipedia method validation embeddings")
-    wikiMethodValidationArticles = embedder.createEmbeddings(wikiMethodValidationArticles)
-    wikiMethodValidationKeywords = nnlmForKeywords.createEmbeddings(wikiMethodValidationKeywords)
-
     wikiTrainLabels = np.array(wikiTrainLabels)
     wikiTrainValidationLabels = np.array(wikiTrainValidationLabels)
     wikiMethodValidationLabels = np.array(wikiMethodValidationLabels)
 
-    print("\tTranscript embeddings")
+    print("Create embeddings for single trainer(embeddings must be the same for keywords and text)")
+
+    print("\tWikipedia train embeddings")
+
+    print("\t\tArticles embeddings")
+    wikiTrainArticlesEmbeddings = embedder.createEmbeddings(wikiTrainArticles)
+    print("\t\tKeywords embeddings")
+    wikiTrainKeywordsEmbeddings = embedder.createEmbeddings(wikiTrainKeywords)
+
+    print("\tWikipedia train validation embeddings")
+
+    print("\t\tArticles embeddings")
+    wikiTrainValidationArticlesEmbeddings = embedder.createEmbeddings(wikiTrainValidationArticles)
+    print("\t\tKeywords embeddings")
+    wikiTrainValidationKeywordsEmbeddings = embedder.createEmbeddings(wikiTrainValidationKeywords)
+
+    print("\tWikipedia method validation embeddings")
+
+    print("\t\tArticles embeddings")
+    wikiMethodValidationArticlesEmbeddings = embedder.createEmbeddings(wikiMethodValidationArticles)
+    print("\t\tKeywords embeddings")
+    wikiMethodValidationKeywordsEmbeddings = embedder.createEmbeddings(wikiMethodValidationKeywords)
+
+    print("\tUpv embeddings")
+
+    print("\t\tUpv transcript embeddings")
     transcriptsEmbeddings = embedder.createEmbeddings(preProcessedUpvData[0])
-    print("\tKeywords embeddings")
+    print("\t\tUpv keywords embeddings")
+    keywordsEmbeddings = embedder.createEmbeddings(preProcessedUpvData[1])
+    
+    print("Starting the single trainer...")
+    knownTranscripts, knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.singleTrainer(clf = clf, threshold = 50, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticlesEmbeddings, wikiTrainLabels = wikiTrainLabels.ravel(),
+                                                                                                                    wikiTrainValidationArticles = wikiTrainValidationArticlesEmbeddings, wikiTrainValidationKeywords = wikiTrainValidationKeywordsEmbeddings, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel())
+    Method.validateTheMethod(clf, None, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, wikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
+
+
+    print("Create embeddings for co-training trainer(the embeddings for keywords will be just NNLM while the embeddings for text can vary)")
+    nnlmForKeywords = Transformer.NnlmModel()
+    
+    print("\tRemake wikipedia train keywords embeddings")
+    wikiTrainKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiTrainKeywords)
+
+    print("\tRemake wikipedia train validation keywords embeddings")
+    wikiTrainValidationKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiTrainValidationKeywords)
+
+    print("\tRemake wikipedia method validation keywords embeddings")
+    wikiMethodValidationKeywordsEmbeddings = nnlmForKeywords.createEmbeddings(wikiMethodValidationKeywords)
+
+    print("\tRemake upv keywords embeddings")
     keywordsEmbeddings = nnlmForKeywords.createEmbeddings(preProcessedUpvData[1])
 
-
-    print("Starting the single trainer...")
-    knownTranscripts, knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.singleTrainer(clf = clf, threshold = 1000, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticles, wikiTrainLabels = wikiTrainLabels.ravel(),
-                                                                                                                    wikiTrainValidationArticles = wikiTrainValidationArticles, wikiTrainValidationKeywords = wikiTrainValidationKeywords, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel())
-    validateTheMethod(clf, None, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticles, wikiMethodValidationKeywords, wikiMethodValidationLabels)
-
     print("Starting the cotrainer with static keywords...")
-    knownTranscripts, knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 1000, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticles, wikiTrainKeywords = wikiTrainKeywords, wikiTrainLabels = wikiTrainLabels.ravel(),
-                                                                                                                   wikiTrainValidationArticles = wikiTrainValidationArticles, wikiTrainValidationKeywords = wikiTrainValidationKeywords, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= True)
+    knownTranscripts, knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 50, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticlesEmbeddings, wikiTrainKeywords = wikiTrainKeywordsEmbeddings, wikiTrainLabels = wikiTrainLabels.ravel(),
+                                                                                                                   wikiTrainValidationArticles = wikiTrainValidationArticlesEmbeddings, wikiTrainValidationKeywords = wikiTrainValidationKeywordsEmbeddings, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= True)
     
-    validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticles, wikiMethodValidationKeywords, wikiMethodValidationLabels)
+    Method.validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, wikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
 
     print("Starting the cotrainer with dynamic keywords...")
-    knownTranscripts,knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 1000, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticles, wikiTrainKeywords = wikiTrainKeywords, wikiTrainLabels = wikiTrainLabels.ravel(),
-                                                                                                                   wikiTrainValidationArticles = wikiTrainValidationArticles, wikiTrainValidationKeywords = wikiTrainValidationKeywords, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= False)
+    knownTranscripts,knownKeywords, knownTranscriptsLabels, unknownTranscripts, unknownKeywords = Method.coTrainer(clf = clf, keywordsModel = keywordsModel, threshold = 50, upvData = [transcriptsEmbeddings, keywordsEmbeddings], wikiTrainArticles = wikiTrainArticlesEmbeddings, wikiTrainKeywords = wikiTrainKeywordsEmbeddings, wikiTrainLabels = wikiTrainLabels.ravel(),
+                                                                                                                   wikiTrainValidationArticles = wikiTrainValidationArticlesEmbeddings, wikiTrainValidationKeywords = wikiTrainValidationKeywordsEmbeddings, wikiTrainValidationLabels = wikiTrainValidationLabels.ravel(), staticKeywords= False)
     
-    validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticles, wikiMethodValidationKeywords, wikiMethodValidationLabels)
+    Method.validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticlesEmbeddings, wikiMethodValidationKeywordsEmbeddings, wikiMethodValidationLabels)
 
     
 
@@ -122,8 +114,8 @@ def pipeline(clf, keywordsModel, embedder):
 embedders = [Transformer.BertModel(), Transformer.UseModel(), Transformer.NnlmModel()]
 
 classifiers = [    svm.SVC(gamma='auto', decision_function_shape='ovo', kernel='rbf', C = 5),
-                   RandomForestClassifier(),
-                   XGBClassifier()
+                   RandomForestClassifier(n_jobs=-1),
+                   XGBClassifier(n_thread=-1)
               ]
 keywordsModel = svm.SVC(gamma='auto', decision_function_shape='ovo', kernel='rbf', C = 1)
 

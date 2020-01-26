@@ -18,7 +18,7 @@ class UseModel:
    def createEmbeddings(self, X):
       embeddings = []
       for i in range(0, len(X) // self.batch_size):
-              l = i*self.batch_size 
+              l = i * self.batch_size 
               r = l + self.batch_size
               embeddings.append(self.module(X[l:r]).numpy())
       

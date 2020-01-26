@@ -4,7 +4,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn import svm
 import numpy as np
 
-def singleTrainer(clf,threshold, upvData, wikiTrainArticles, wikiTrainLabels, wikiTrainValidationArticles, wikiTrainValidationKeywords, wikiTrainValidationLabels):
+def singleTrainer(clf, threshold, upvData, wikiTrainArticles, wikiTrainLabels, wikiTrainValidationArticles, wikiTrainValidationKeywords, wikiTrainValidationLabels):
     transcripts, keywords = upvData
 
     trainX = wikiTrainArticles
@@ -93,7 +93,7 @@ def coTrainer(clf, keywordsModel, threshold, upvData,  wikiTrainArticles, wikiTr
         if(iteration == 1 or staticKeywords == False):
             scores = cross_val_score(keywordsModel, trainK, trainY, cv=10)
             keywordsModel.fit(trainK, trainY)
-            predictedLabels = keywordsModel.predict( wikiTrainValidationKeywords)
+            predictedLabels = keywordsModel.predict(wikiTrainValidationKeywords)
 
             print("10-fold cross-validation for keywords model accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))
             print("Classification report against the wiki train validation dataset for keywords")
@@ -132,3 +132,38 @@ def coTrainer(clf, keywordsModel, threshold, upvData,  wikiTrainArticles, wikiTr
             return [np.array(obtainedTranscripts),np.array(obtainedKeywords), np.array(obtainedTranscriptsLabels), np.array(transcripts), np.array(keywords)]
         
         iteration+=1
+
+
+def validateTheMethod(clf, keywordsModel, knownTranscripts, knownKeywords, knownTranscriptsLabels, wikiMethodValidationArticles, wikiMethodValidationKeywords, wikiMethodValidationLabels):
+    
+    print("Validating the method...")
+
+    print("Validating the transcripts")
+    scores = cross_val_score(clf, knownTranscripts, knownTranscriptsLabels, cv=10)
+    clf.fit(knownTranscripts, knownTranscriptsLabels)
+
+    result = clf.predict(wikiMethodValidationArticles)
+
+    print("10-fold cross-validation for articles model accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))      
+    print(classification_report(wikiMethodValidationLabels, result))
+
+    if(keywordsModel != None):
+        print("Validating the keywords")
+        
+        scores = cross_val_score(keywordsModel, knownKeywords, knownTranscriptsLabels, cv=10)
+        keywordsModel.fit(knownKeywords, knownTranscriptsLabels)
+
+        result = keywordsModel.predict(wikiMethodValidationKeywords)
+
+        print("10-fold cross-validation for keywords model accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))      
+        print(classification_report(wikiMethodValidationLabels, result))
+    else:
+        print("Validating the keywords")
+        
+        scores = cross_val_score(clf, knownKeywords, knownTranscriptsLabels, cv=10)
+        clf.fit(knownKeywords, knownTranscriptsLabels)
+
+        result = clf.predict(wikiMethodValidationKeywords)
+
+        print("10-fold cross-validation for keywords model accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))      
+        print(classification_report(wikiMethodValidationLabels, result))
