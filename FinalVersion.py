@@ -1,42 +1,48 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Nov 13 00:23:32 2019
+
+@author: theo local
+"""
 import json
 import numpy as np
 import pandas as pd
 from nltk import RegexpTokenizer
-from nltk.corpus import stopwords
-import gensim as sim
+import time
 import re
-from sklearn.cluster import DBSCAN
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
-from gensim.models import Word2Vec
-import wikipedia
+
 
 import tensorflow_hub as hub
 import tensorflow as tf
-#Extract the common words from the transcripts and the pre trained word vectorizer
 
+from rake_nltk import Rake
 
-dataframe = pd.read_excel("wikipediaArticles.xlsx", parse_cols = [1])
+import pickle
 
-articles = dataframe.values
-
-dataframe = pd.read_excel("wikipediaArticles.xlsx", parse_cols = [2])
-
-labels = dataframe.values
 
 regex = RegexpTokenizer(r"\b\w+\b");
-
-processedArticles = []
-processedLabels = []
 
 def processTranscript(transcript):
     words = regex.tokenize(transcript)
     processedTranscript = ""
-  
     for word in words:
         word = word.lower()
         processedTranscript  = processedTranscript  + word + " "
     return processedTranscript
+
+
+
+#Extract the common words from the transcripts and the pre trained word vectorizer
+dataframe = pd.read_excel(r"C:\Users\theod\Desktop\Erasmus_Valencia_2019-2020\Valencia_work\ALEX\Valencia-Educ-Video\wikipediaArticles2.0.xlsx", parse_cols = [1])
+
+articles = dataframe.values
+
+dataframe = pd.read_excel(r"C:\Users\theod\Desktop\Erasmus_Valencia_2019-2020\Valencia_work\ALEX\Valencia-Educ-Video\wikipediaArticles2.0.xlsx", parse_cols = [2])
+
+labels = dataframe.values
+
+processedArticles = []
+processedLabels = []
 
 
 for i in range(0,len(articles)):
@@ -65,12 +71,33 @@ transcripts = []
 transcriptsKeywords = []
 regex = RegexpTokenizer(r"\b\w+\b");
 
-with open('videos_upv.json',"r", encoding='utf-8') as f:
+with open(r"C:\Users\theod\Desktop\Erasmus_Valencia_2019-2020\Valencia_work\ALEX\Valencia-Educ-Video\videos_upv.json","r", encoding='utf-8') as f:
     videos_json = json.load(f)
-        
+
+dictTranscriptTitle = {}
+#keeping the indexes corresponding to the collection formed in Gabi's algorithm for testing purposes
+dictTranscriptTitleGabi = {}
+dictTranscriptEmbed = {}
+dictIndexTranscript = {}
+dictTitleCluster = {}
+
+videoIdDictionary = {}
+documentsGabi = []
+
+counter = 0;
+
+r = Rake(language="Spanish")
+
+i = 0
+
+
+dictTranscriptTags = {}
+
 
 for videos in videos_json:
     transcript =  videos["transcription"]
+    #print(transcript)
+    
     if("metadata" not in videos):
         continue
     if("keywords" not in videos["metadata"]):
@@ -84,14 +111,22 @@ for videos in videos_json:
             keywords+= text + " "
     else:
         keywords = keywords_obj
-            
-    if transcript != "" and keywords!="":
+        
+    if transcript != "" and keywords!= "":
         processedTr = processTranscript(transcript)
         processedKey = processTranscript(keywords)
         
-        if(processedTr !="" and processedKey!=""):
+       
+        if(processedTr !="" and processedKey !=""):
             transcripts.append(processedTr)
+            dictIndexTranscript[counter] = processedTr
+                
+            counter = counter + 1
+            dictTranscriptTitle[processedTr] = videos["title"]
+            
+            processedKey += videos["title"] + " "
             transcriptsKeywords.append(processedKey)
+    i = i + 1
 
 print("Generating the vector matrix")      
 
@@ -105,6 +140,7 @@ T = []
 K = []
 Q = []
 
+
 with tf.Session() as session:
     session.run([tf.global_variables_initializer(), tf.tables_initializer()])
     X = session.run(embed(wikiTrain))
@@ -112,9 +148,14 @@ with tf.Session() as session:
     Q = session.run(embed(wikiFinalTrain))
     T = session.run(embed(transcripts))
     K = session.run(embed(transcriptsKeywords))
-    
-    
 
+
+counter = 0
+for i in range(0, len(T)):
+    dictTranscriptEmbed[dictIndexTranscript[counter]] = T[i]
+    counter = counter + 1
+
+print(counter)
 print("Vector matrix generated")
 
     
@@ -131,23 +172,29 @@ wrongTranscriptsIndices = range(0,len(transcripts))
 TranscriptsX = []
 TranscriptsXLabels =[]
 
+start = time.time()
+
 while(True):
    
     nr = 0
-    clf = svm.SVC(gamma='scale', decision_function_shape='ovo', kernel='rbf', C=60)
+    clf = svm.SVC(gamma=0.001, decision_function_shape='ovo', kernel='rbf', C=60)
     
+    #intre processed articles si labels
     scores = cross_val_score(clf, X,wikiTrainTest.ravel(), cv=10)
     print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))
+    #fit intre proccessed articles si labe;s
     clf.fit(X, wikiTrainTest)
     
+    #prezice si pt articles de test 
     result = clf.predict(Z)
     
     from sklearn.metrics import classification_report
     
-    print(classification_report(wikiEvalTest, result))
+    #cat de bine prezice label pt articles de test
+    print(classification_report( (np.asarray(wikiEvalTest)).ravel() , result))
     
     resultTrLabels = clf.predict(T)
-    resultKeyLabels =clf.predict(K)
+    resultKeyLabels = clf.predict(K)
     
     validTranscriptsX = []
     validTranscriptsLabels = []
@@ -159,7 +206,17 @@ while(True):
     wrongIndices =[]
     for i in range(0,len(resultTrLabels)):
         if(resultTrLabels[i] == resultKeyLabels[i]):
-            validTranscriptsX.append(T[i]);
+            validTranscriptsX.append(T[i])
+            for key_transcript in dictTranscriptEmbed:
+                ok = 1
+                for k in range(0, len(dictTranscriptEmbed[key_transcript])):
+                   if(dictTranscriptEmbed[key_transcript][k] != T[i][k]):
+                       ok = 0
+                       break
+               
+                if(ok == 1):
+                    dictTitleCluster[dictTranscriptTitle[key_transcript]] = resultTrLabels[i]
+                    
             TranscriptsX.append(T[i])
             TranscriptsXLabels.append(resultTrLabels[i])
             validTranscriptsLabels.append(resultTrLabels[i])
@@ -190,17 +247,53 @@ while(True):
     K = np.array(invalidKeywordsX)
     
     if(nr == len(resultTrLabels)):
+        print(nr)
+        print(resultTrLabels)
         break
-    
-    
-clf = svm.SVC(gamma='scale', decision_function_shape='ovo', kernel='rbf', C=60)
+
+
+file = open("rakeKeywordsceva.txt", "w", encoding="utf-8")
+
+clf = svm.SVC(gamma=0.001, decision_function_shape='ovo', kernel='rbf', C=60)
 scores = cross_val_score(clf, np.array(TranscriptsX) ,np.array(TranscriptsXLabels).ravel(), cv=10)
 print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))
 clf.fit(np.array(TranscriptsX) ,np.array(TranscriptsXLabels).ravel())
 result = clf.predict(Q)
+
+end = time.time()
         
-print(classification_report(wikiFinalTest, result))
+print(classification_report((np.asarray(wikiFinalTest)).ravel(), result))
 
+print(start - end)
 
+titles = []
+for title_key in dictTitleCluster:
+    titles.append(title_key)
+  
+titles.sort()  
 
+for title_key in titles:
+    file.write(str(title_key) + " " + str(dictTitleCluster[title_key]))
+    file.write('\n')
+    
+file.close()
 
+ldaDataFrame = pd.DataFrame(columns = ["VideoTitle", "ProcessedTranscript", "Cluster"])
+
+for transcriptGabi_key in dictTranscriptTitleGabi:
+        if(dictTranscriptTitleGabi[transcriptGabi_key] in dictTitleCluster):
+            newLine = pd.DataFrame([[dictTranscriptTitleGabi[transcriptGabi_key], transcriptGabi_key, 
+                                    dictTitleCluster[dictTranscriptTitleGabi[transcriptGabi_key]]]],
+                                    columns = ['VideoTitle','ProcessedTranscript', 'Cluster'])
+            ldaDataFrame = ldaDataFrame.append(newLine,ignore_index = True)
+
+writer = pd.ExcelWriter('LdaData.xlsx', engine='xlsxwriter')
+
+#Convert the dataframe to an XlsxWriter Excel object.
+ldaDataFrame.to_excel(writer, sheet_name='Sheet1')
+
+#Close the Pandas Excel writer and output the Excel file.
+writer.save()
+
+filename = 'alex_model.sav'
+pickle.dump(clf, open(filename, 'wb'))

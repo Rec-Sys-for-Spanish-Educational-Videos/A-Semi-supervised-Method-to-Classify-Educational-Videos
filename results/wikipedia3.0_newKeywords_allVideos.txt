@@ -1,0 +1,109 @@
+Accuracy: 0.88 (+/- 0.01)
+C:\Users\theod\Anaconda3\lib\site-packages\sklearn\utils\validation.py:724: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+  y = column_or_1d(y, warn=True)
+              precision    recall  f1-score   support
+
+           0       0.91      0.88      0.90       883
+           1       0.84      0.88      0.86       848
+           2       0.88      0.88      0.88      1045
+
+    accuracy                           0.88      2776
+   macro avg       0.88      0.88      0.88      2776
+weighted avg       0.88      0.88      0.88      2776
+
+Valid transcripts:9836 / 14398
+Accuracy: 0.92 (+/- 0.04)
+              precision    recall  f1-score   support
+
+           0       0.91      0.88      0.89       883
+           1       0.83      0.87      0.85       848
+           2       0.88      0.87      0.88      1045
+
+    accuracy                           0.87      2776
+   macro avg       0.87      0.87      0.87      2776
+weighted avg       0.87      0.87      0.87      2776
+
+Valid transcripts:1439 / 4562
+Accuracy: 0.91 (+/- 0.03)
+              precision    recall  f1-score   support
+
+           0       0.91      0.88      0.90       883
+           1       0.83      0.87      0.85       848
+           2       0.88      0.87      0.88      1045
+
+    accuracy                           0.87      2776
+   macro avg       0.87      0.87      0.87      2776
+weighted avg       0.88      0.87      0.87      2776
+
+Valid transcripts:553 / 3123
+Accuracy: 0.91 (+/- 0.03)
+              precision    recall  f1-score   support
+
+           0       0.92      0.87      0.89       883
+           1       0.83      0.87      0.85       848
+           2       0.88      0.88      0.88      1045
+
+    accuracy                           0.87      2776
+   macro avg       0.87      0.87      0.87      2776
+weighted avg       0.88      0.87      0.87      2776
+
+Valid transcripts:168 / 2570
+Accuracy: 0.91 (+/- 0.03)
+              precision    recall  f1-score   support
+
+           0       0.91      0.87      0.89       883
+           1       0.83      0.87      0.85       848
+           2       0.88      0.87      0.88      1045
+
+    accuracy                           0.87      2776
+   macro avg       0.87      0.87      0.87      2776
+weighted avg       0.87      0.87      0.87      2776
+
+Valid transcripts:73 / 2402
+Accuracy: 0.90 (+/- 0.03)
+              precision    recall  f1-score   support
+
+           0       0.92      0.87      0.89       883
+           1       0.83      0.88      0.85       848
+           2       0.88      0.87      0.88      1045
+
+    accuracy                           0.87      2776
+   macro avg       0.87      0.87      0.87      2776
+weighted avg       0.88      0.87      0.87      2776
+
+Valid transcripts:45 / 2329
+Accuracy: 0.90 (+/- 0.03)
+              precision    recall  f1-score   support
+
+           0       0.92      0.87      0.89       883
+           1       0.83      0.88      0.85       848
+           2       0.88      0.87      0.88      1045
+
+    accuracy                           0.87      2776
+   macro avg       0.87      0.87      0.87      2776
+weighted avg       0.88      0.87      0.87      2776
+
+Valid transcripts:34 / 2284
+Accuracy: 0.90 (+/- 0.03)
+              precision    recall  f1-score   support
+
+           0       0.92      0.87      0.89       883
+           1       0.83      0.88      0.85       848
+           2       0.88      0.88      0.88      1045
+
+    accuracy                           0.87      2776
+   macro avg       0.88      0.87      0.87      2776
+weighted avg       0.88      0.87      0.87      2776
+
+Valid transcripts:11 / 2250
+time: 3525.0782079696655
+Accuracy: 0.95 (+/- 0.03)
+              precision    recall  f1-score   support
+
+           0       0.93      0.82      0.87       823
+           1       0.77      0.90      0.83       949
+           2       0.86      0.82      0.84      1004
+
+    accuracy                           0.85      2776
+   macro avg       0.86      0.85      0.85      2776
+weighted avg       0.85      0.85      0.85      2776
